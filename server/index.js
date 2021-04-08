@@ -44,11 +44,11 @@ io.on('connection', (socket) => { //when a socket connects //socket is connected
         const user = removeUser(socket.id);
 
         if(user){
-            io.to(user.room).emit('message', { user: 'admin', text: '${user.name} has left'});
+            io.to(user.room).emit('message', { user: 'admin', text: `${user.name} has left`});
             io.to(user.room).emit('roomData', { room: user.room, users: getUsersInRoom(user.room)});
         }
     })
 })
 app.use(router); //called router as the middleware
 
-server.listen(PORT, () => console.log('Server has started on port ${PORT}'));
+server.listen(PORT, () => console.log(`Server has started on port ${PORT}`));
