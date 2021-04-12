@@ -19,7 +19,7 @@ const io = socketio(server, { cors: {
 app.use(cors());
 app.use(router); //called router as the middleware
 
-io.on('connect', (socket) => { //when a socket connects //socket is connected as a client side socket
+io.on('connection', (socket) => { //when a socket connects //socket is connected as a client side socket
     console.log('A user has connected!');
 
     socket.on('join', ({ name, room }, callback) => { //when a user joins
@@ -27,7 +27,13 @@ io.on('connect', (socket) => { //when a socket connects //socket is connected as
         const { error, user } = addUser({ id: socket.id, name, room }); //addUser returns either user or error
     
 
-        if(error) return callback(error);
+        if(error){
+            socket.emit("message", {
+            user: "admin",
+            text: `Error: ${error}`,
+        });
+        return;
+    }
 
         //if no error 
 
@@ -37,16 +43,15 @@ io.on('connect', (socket) => { //when a socket connects //socket is connected as
         socket.join(user.room); //joins user to room
 
         io.to(user.room).emit('roomData', { room: user.room, users: getUsersInRoom(user.room)});
-
-        callback();
     });
 
-    socket.on('sendMessage', (message, callback) => { //listens for sendMessage event
+    socket.on('sendMessage', (message) => { //listens for sendMessage event
+        console.log("Sending message");
         const user = getUser(socket.id); //to get user who sent a message
 
+        if (user) {
         io.to(user.room).emit('message', { user: user.name, text: message}); //message is from frontend.. is sent to the room
-
-        callback(); 
+        }
     });
 
     socket.on('disconnect', () => {

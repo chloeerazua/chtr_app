@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import queryString from 'query-string'; //helps in retrieving data from the url in join component
 import io from "socket.io-client";
 
@@ -8,45 +8,47 @@ import InfoBar from '../InfoBar/InfoBar';
 import Input from '../Input/Input';
 import Messages from '../Messages/Messages';
 
-let socket;
+const ENDPOINT = 'localhost:5000';
 
 const Chat = ({ location }) => {
     const [name, setName] = useState('');
     const [room, setRoom] = useState('');
-    const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
-    const ENDPOINT = 'localhost:5000';
+
+    const socket = useRef(null);
 
     useEffect(() => {
         const { name, room } = queryString.parse(location.search); //returns object
-
-        socket = io(ENDPOINT); //passed an endpoint to the server
-
         setName(name);
         setRoom(room);
 
-        socket.emit('join', {name, room}, () => { //when a user joins, an object will be passed with name: name, room: room
+        socket.current = io(ENDPOINT); //passed an endpoint to the server
+
+        socket.current.on("connect", () => {
+            socket.current.emit('join', {name, room}); //when a user joins, an object will be passed with name: name, room: room
         });
 
-        return () => {
-            socket.emit('disconnect'); //emitting the disconnect event
+        socket.current.on("message", (message) => {
+            setMessages((prevMessages) => [...prevMessages, message]);
+        });
 
-            socket.off(); //turns off an instance of the socket
-        }
-    }, [ENDPOINT, location.search]); //useeffect would only rerender if these 2 values change
+        //return () => {
+            //socket.emit('disconnect'); //emitting the disconnect event
 
-    useEffect(() => { //for handling messages
-        socket.on('message', (message) => { //listen for message
-            setMessages([...messages, message]); //pushes message from system or user to messages array
-        })
-    }, [messages]); //let useeffect run only when messsages array changes
+            //socket.off(); //turns off an instance of the socket
+        //}
+    }, [location.search]); //useeffect would only rerender if these 2 values change
+
+    //useEffect(() => { //for handling messages
+      //  socket.on('message', (message) => { //listen for message
+        //    setMessages([...messages, message]); //pushes message from system or user to messages array
+        // })
+    //}, [messages]); //let useeffect run only when messsages array changes
     
     //function(eventhandler) for sending messages 
-    const sendMessage = (event) => { //call event that prevent default from keypress or buttonclick
-        event.preventdefault();
-
+    const sendMessage = (message) => { //call event that prevent default from keypress or buttonclick
         if(message) {
-            socket.emit('sendMessage', message, () => setMessage('')); //when message is sent, input field should clear
+            socket.current.emit("sendMessage", message); //when message is sent, input field should clear
         }
     }
     
@@ -57,7 +59,7 @@ const Chat = ({ location }) => {
             <div className="Container">
                 <InfoBar room={room}/>
                 <Messages messages={messages} name={name}/>
-                <Input message = {message} setMessage={setMessage} sendMessage={sendMessage} />
+                <Input sendMessage={sendMessage} />
             </div>
         </div>
     )

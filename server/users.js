@@ -3,14 +3,15 @@
 const users = [];
 
 const addUser = ({ id, name, room }) => {
-  name = name.trim().toLowerCase(); //Chloe Erazua = chloeerazua
-  room = room.trim().toLowerCase();
-
-  const existingUser = users.find((user) => user.room === room && user.name === name); //newuser cant sign up in the same room with same username with existing user
 
   if(!name || !room) {
     return { error: 'Username and room are required.' };
   }
+  
+  name = name.trim().toLowerCase(); //Chloe Erazua = chloeerazua
+  room = room.trim().toLowerCase();
+
+  const existingUser = users.find((user) => user.room === room && user.name === name); //newuser cant sign up in the same room with same username with existing user
 
   if(existingUser) {
     return { error: 'Username is taken.' };
