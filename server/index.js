@@ -10,7 +10,11 @@ const PORT = 5000;
 
 const app = express(); //app initialized from express
 const server = http.createServer(app); //server initialization
-const io = socketio(server); //created an instance of socketio
+const io = socketio(server, { cors: {
+      origin: '*'
+    }
+})
+  
 
 app.use(cors());
 app.use(router); //called router as the middleware
@@ -19,14 +23,16 @@ io.on('connect', (socket) => { //when a socket connects //socket is connected as
     console.log('A user has connected!');
 
     socket.on('join', ({ name, room }, callback) => { //when a user joins
+        console.log(name);
         const { error, user } = addUser({ id: socket.id, name, room }); //addUser returns either user or error
+    
 
         if(error) return callback(error);
 
         //if no error 
 
         socket.emit('message', { user: 'admin', text: `${user.name}, welcome to ${user.room}` }); //system generated message to user that just joined
-        socket.broadcoast.to(user.room).emit('message', { user: 'admin', text: `${user.name}, just joined!`}); //system generated message to other users in the room
+        io.to(user.room).emit('message', { user: 'admin', text: `${user.name}, just joined!`}); //system generated message to other users in the room
 
         socket.join(user.room); //joins user to room
 
