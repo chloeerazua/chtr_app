@@ -15,12 +15,12 @@ const Chat = ({ location }) => {
     const [room, setRoom] = useState('');
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
-    const endpoint = 'localhost:5000';
+    const ENDPOINT = 'localhost:5000';
 
     useEffect(() => {
         const { name, room } = queryString.parse(location.search); //returns object
 
-        socket = io(endpoint); //passed an endpoint to the server
+        socket = io(ENDPOINT); //passed an endpoint to the server
 
         setName(name);
         setRoom(room);
@@ -33,7 +33,7 @@ const Chat = ({ location }) => {
 
             socket.off(); //turns off an instance of the socket
         }
-    }, [endpoint, location.search]); //useeffect would only rerender if these 2 values change
+    }, [ENDPOINT, location.search]); //useeffect would only rerender if these 2 values change
 
     useEffect(() => { //for handling messages
         socket.on('message', (message) => { //listen for message
